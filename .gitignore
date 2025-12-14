@@ -57,3 +57,7 @@ nunit-*.xml
 *.sqlite
 *.vsidx
 *.sqlite-journal
+*.db-shm
+*.db-wal
+/.vs/Time-Tracker-MCP-Tool/CopilotIndices/18.3.270.59485/SemanticSymbols.db
+/.vs/Time-Tracker-MCP-Tool/CopilotIndices/18.3.270.59485/CodeChunks.db
