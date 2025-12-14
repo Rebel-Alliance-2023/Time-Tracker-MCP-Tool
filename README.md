@@ -94,16 +94,16 @@ Add to `.vscode/mcp.json` in your workspace:
 AI: [calls time_session_start]
     milestone_id: "M2"
     task_ids: ["M2-001", "M2-002", "M2-003"]
-    ? session_id: "abc123..."
+    => session_id: "abc123..."
 
     [calls time_task_start] task_id: "M2-001"
     ... implements task ...
     [calls time_task_end] task_id: "M2-001"
-    ? Duration: 1 minute 13 seconds
+    => Duration: 1 minute 13 seconds
 
     [calls time_session_end]
-    ? Total Duration: 5 minutes 42 seconds
-    ? Tasks Completed: 3/3
+    => Total Duration: 5 minutes 42 seconds
+    => Tasks Completed: 3/3
 ```
 
 ---
@@ -112,35 +112,35 @@ AI: [calls time_session_start]
 
 ```
 Time-Tracker-MCP-Tool/
-??? src/
-?   ??? TimeTrackerMcp/
-?       ??? TimeTrackerMcp.csproj
-?       ??? Program.cs
-?       ??? Tools/
-?       ?   ??? TimeTools.cs
-?       ??? Services/
-?       ?   ??? ISessionService.cs
-?       ?   ??? InMemorySessionService.cs
-?       ?   ??? ITimeProvider.cs
-?       ??? Models/
-?           ??? Session.cs
-?           ??? TaskRecord.cs
-?           ??? TimeResult.cs
-??? tests/
-?   ??? TimeTrackerMcp.Tests/
-?       ??? TimeTrackerMcp.Tests.csproj
-?       ??? TimeToolsTests.cs
-??? docs/
-?   ??? Time Tracker MCP Tool Specification.md
-?   ??? Implementation Plan - Time Tracker MCP Tool.md
-?   ??? Time Tracker MCP Tool - Task List.md
-??? .vscode/
-?   ??? mcp.json
-??? .github/
-?   ??? workflows/
-?       ??? build.yml
-??? README.md
-??? LICENSE
+|-- src/
+|   +-- TimeTrackerMcp/
+|       |-- TimeTrackerMcp.csproj
+|       |-- Program.cs
+|       |-- Tools/
+|       |   +-- TimeTools.cs
+|       |-- Services/
+|       |   |-- ISessionService.cs
+|       |   |-- InMemorySessionService.cs
+|       |   +-- ITimeProvider.cs
+|       +-- Models/
+|           |-- Session.cs
+|           |-- TaskRecord.cs
+|           +-- TimeResult.cs
+|-- tests/
+|   +-- TimeTrackerMcp.Tests/
+|       |-- TimeTrackerMcp.Tests.csproj
+|       +-- TimeToolsTests.cs
+|-- docs/
+|   |-- Time Tracker MCP Tool Specification.md
+|   |-- Implementation Plan - Time Tracker MCP Tool.md
+|   +-- Time Tracker MCP Tool - Task List.md
+|-- .vscode/
+|   +-- mcp.json
+|-- .github/
+|   +-- workflows/
+|       +-- build.yml
+|-- README.md
++-- LICENSE
 ```
 
 ---
