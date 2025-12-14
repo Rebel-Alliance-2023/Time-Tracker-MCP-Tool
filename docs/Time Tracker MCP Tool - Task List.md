@@ -20,7 +20,7 @@
 
 | ID | Task | Size | Priority | Deps | Status |
 |----|------|------|----------|------|--------|
-| M0-001 | Create GitHub repo `copilot-mcp-tools` | XS | P0 | - | [ ] |
+| M0-001 | Create GitHub repo `Time-Tracker-MCP-Tool` | XS | P0 | - | [x] |
 | M0-002 | Initialize repo with `.gitignore`, `LICENSE` (MIT), `README.md` | XS | P0 | M0-001 | [ ] |
 | M0-003 | Create solution file `CopilotMcpTools.sln` | XS | P0 | M0-002 | [ ] |
 | M0-004 | Create `src/TimeTrackerMcp/` project folder structure | XS | P0 | M0-003 | [ ] |

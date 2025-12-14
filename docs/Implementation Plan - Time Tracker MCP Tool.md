@@ -42,7 +42,7 @@ The server runs independently of any project being modified by the assistant, so
 - Deep integrations into Cookbook platform services (must remain standalone)
 
 ### 1.3 Repository
-- **Separate GitHub repository**: `copilot-mcp-tools` (or similar)
+- **GitHub repository**: `Time-Tracker-MCP-Tool`
 - This will be the first of potentially many Copilot MCP tools
 - Independent of `cookbook-agent-platform`
 
@@ -103,7 +103,7 @@ The server runs independently of any project being modified by the assistant, so
 **Objective:** stand up a buildable, runnable MCP server with correct transport and tool registration.
 
 **Deliverables**
-- New GitHub repo: `copilot-mcp-tools`
+- GitHub repo: `Time-Tracker-MCP-Tool`
 - Repo layout:
   - `src/TimeTrackerMcp/` (server)
   - `tests/TimeTrackerMcp.Tests/` (xUnit)

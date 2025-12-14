@@ -63,7 +63,7 @@ For the Time Tracker MCP Tool to be usable by Copilot during task execution:
 ### Recommended Project Structure
 
 ```
-time-tracker-mcp/
+Time-Tracker-MCP-Tool/
 ??? src/
 ?   ??? TimeTrackerMcp/
 ?       ??? TimeTrackerMcp.csproj
@@ -224,6 +224,7 @@ public record Session
     public long? EndTicks { get; set; }
     public string Timezone { get; init; }
     public Dictionary<string, string> Metadata { get; init; }
+    public List<string> Tags { get; init; }             // For categorization
     public List<TaskRecord> Tasks { get; init; } = new();
     public DateTimeOffset LastActivityTime { get; set; } // For expiration
 }
