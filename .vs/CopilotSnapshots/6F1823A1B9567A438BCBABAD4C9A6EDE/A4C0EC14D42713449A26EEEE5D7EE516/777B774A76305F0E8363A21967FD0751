@@ -1,0 +1,4 @@
+﻿namespace TimeTrackerMcp.Services;
+
+// Placeholder for service classes
+// ITimeZoneResolver.cs, ISessionService.cs, etc. will be implemented in M1/M2

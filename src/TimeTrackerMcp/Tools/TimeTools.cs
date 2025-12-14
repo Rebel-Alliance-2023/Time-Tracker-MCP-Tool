@@ -1,0 +1,546 @@
+using ModelContextProtocol.Server;
+using System.ComponentModel;
+using System.Text.Json;
+using TimeTrackerMcp.Models;
+using TimeTrackerMcp.Services;
+
+namespace TimeTrackerMcp.Tools;
+
+/// <summary>
+/// MCP tools for time tracking functionality.
+/// </summary>
+[McpServerToolType]
+public static class TimeTools
+{
+    /// <summary>
+    /// Gets the current system time in the requested format and timezone.
+    /// </summary>
+    /// <param name="timeZoneResolver">Injected timezone resolver service.</param>
+    /// <param name="format">Output format: 'iso8601' (default), 'unix', 'unix_ms', 'friendly'</param>
+    /// <param name="timezone">IANA timezone name (e.g., 'America/New_York', 'UTC'). Defaults to 'local'.</param>
+    /// <returns>TimeResult with timestamp, timezone, and UTC offset.</returns>
+    [McpServerTool]
+    [Description("Returns the current system date and time. Supports multiple formats and timezones.")]
+    public static string time_get_current(
+        ITimeZoneResolver timeZoneResolver,
+        [Description("Output format. Options: 'iso8601' (default), 'unix', 'unix_ms', 'friendly'")]
+        string format = "iso8601",
+        [Description("IANA timezone name (e.g., 'America/New_York', 'UTC'). Defaults to system local timezone.")]
+        string timezone = "local")
+    {
+        // M1-012: Resolve timezone (defaults to 'local')
+        var tzResult = timeZoneResolver.Resolve(timezone);
+        if (!tzResult.Success)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = tzResult.ErrorCode,
+                error_message = tzResult.ErrorMessage
+            });
+        }
+
+        var tz = tzResult.TimeZone!;
+        var utcNow = DateTimeOffset.UtcNow;
+        var localTime = TimeZoneInfo.ConvertTime(utcNow, tz);
+
+        // M1-018: Compute UTC offset in ±HH:MM format
+        var offset = tz.GetUtcOffset(utcNow);
+        var utcOffset = FormatUtcOffset(offset);
+
+        // M1-011, M1-013-M1-017: Format timestamp based on format parameter
+        string timestamp;
+        switch (format.ToLowerInvariant())
+        {
+            // M1-013: ISO 8601 format
+            case "iso8601":
+                timestamp = localTime.ToString("o"); // ISO 8601 with offset
+                break;
+
+            // M1-014: Unix timestamp (seconds since epoch)
+            case "unix":
+                timestamp = utcNow.ToUnixTimeSeconds().ToString();
+                break;
+
+            // M1-015: Unix timestamp (milliseconds since epoch)
+            case "unix_ms":
+                timestamp = utcNow.ToUnixTimeMilliseconds().ToString();
+                break;
+
+            // M1-016: Friendly format
+            case "friendly":
+                timestamp = localTime.ToString("MMMM d, yyyy h:mm:ss tt");
+                break;
+
+            // M1-017: Unknown format error
+            default:
+                return JsonSerializer.Serialize(new
+                {
+                    error = true,
+                    error_code = "UNKNOWN_FORMAT",
+                    error_message = $"Unknown format: '{format}'. Valid options are: 'iso8601', 'unix', 'unix_ms', 'friendly'."
+                });
+        }
+
+        // Return successful result
+        var result = new TimeResult
+        {
+            Timestamp = timestamp,
+            Timezone = tz.Id,
+            UtcOffset = utcOffset
+        };
+
+        return JsonSerializer.Serialize(result);
+    }
+
+    // M2-032: Implement time_session_start tool
+    /// <summary>
+    /// Starts a new time tracking session for a milestone.
+    /// </summary>
+    [McpServerTool]
+    [Description("Starts a new time tracking session for a milestone. Returns session ID and start time.")]
+    public static string time_session_start(
+        ISessionService sessionService,
+        // M2-033: Required parameters
+        [Description("Unique identifier for the milestone being tracked (required).")]
+        string milestone_id,
+        [Description("List of task IDs to track in this session (required). Format: comma-separated or JSON array.")]
+        string task_ids,
+        // M2-034: Optional parameters
+        [Description("Human-readable name for the milestone (optional).")]
+        string? milestone_name = null,
+        [Description("IANA timezone name for timestamps. Defaults to 'local'.")]
+        string? timezone = null,
+        [Description("Additional metadata as JSON object (optional).")]
+        string? metadata = null,
+        [Description("Tags for categorization as comma-separated list (optional).")]
+        string? tags = null)
+    {
+        // Parse task_ids (support comma-separated or JSON array)
+        List<string> taskIdList;
+        try
+        {
+            if (task_ids.TrimStart().StartsWith("["))
+            {
+                taskIdList = JsonSerializer.Deserialize<List<string>>(task_ids) ?? new List<string>();
+            }
+            else
+            {
+                taskIdList = task_ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            }
+        }
+        catch
+        {
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = "INVALID_TASK_IDS",
+                error_message = "task_ids must be a comma-separated list or JSON array of task IDs."
+            });
+        }
+
+        // Parse metadata if provided
+        Dictionary<string, string>? metadataDict = null;
+        if (!string.IsNullOrWhiteSpace(metadata))
+        {
+            try
+            {
+                metadataDict = JsonSerializer.Deserialize<Dictionary<string, string>>(metadata);
+            }
+            catch
+            {
+                return JsonSerializer.Serialize(new
+                {
+                    error = true,
+                    error_code = "INVALID_METADATA",
+                    error_message = "metadata must be a valid JSON object with string values."
+                });
+            }
+        }
+
+        // Parse tags if provided
+        List<string>? tagsList = null;
+        if (!string.IsNullOrWhiteSpace(tags))
+        {
+            tagsList = tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        // Start the session
+        var result = sessionService.StartSession(
+            milestoneId: milestone_id,
+            taskIds: taskIdList,
+            milestoneName: milestone_name,
+            timezone: timezone,
+            metadata: metadataDict,
+            tags: tagsList);
+
+        if (!result.Success)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = result.ErrorCode,
+                error_message = result.ErrorMessage
+            });
+        }
+
+        var session = result.Session!;
+
+        // M2-035: Return session response
+        return JsonSerializer.Serialize(new
+        {
+            session_id = session.SessionId,
+            milestone_id = session.MilestoneId,
+            milestone_name = session.MilestoneName,
+            start_time = session.StartTime.ToString("o"),
+            start_time_friendly = session.StartTime.ToString("MMMM d, yyyy h:mm:ss tt"),
+            task_count = session.TaskIds.Count,
+            timezone = session.Timezone,
+            tags = session.Tags,
+            metadata = session.Metadata
+        });
+    }
+
+    // M2-036: Implement time_session_end tool
+    /// <summary>
+    /// Ends a time tracking session and returns the summary.
+    /// </summary>
+    [McpServerTool]
+    [Description("Ends a time tracking session and returns the full summary with duration and task breakdown.")]
+    public static string time_session_end(
+        ISessionService sessionService,
+        // M2-037: Required and optional parameters
+        [Description("The session ID to end (required).")]
+        string session_id,
+        [Description("Include detailed task breakdown in response. Defaults to true.")]
+        bool include_task_details = true)
+    {
+        // M2-039: Handle session not found
+        var result = sessionService.EndSession(session_id);
+
+        if (!result.Success)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = result.ErrorCode,
+                error_message = result.ErrorMessage
+            });
+        }
+
+        // M2-038: Return full session summary
+        return BuildSessionSummaryResponse(result.Session!, include_task_details, isEnded: true);
+    }
+
+    // M2-040: Implement time_session_summary tool
+    /// <summary>
+    /// Gets the current status of an active session without ending it.
+    /// </summary>
+    [McpServerTool]
+    [Description("Gets the current status and summary of an active session without ending it.")]
+    public static string time_session_summary(
+        ISessionService sessionService,
+        [Description("The session ID to get summary for (required).")]
+        string session_id,
+        [Description("Include detailed task breakdown in response. Defaults to true.")]
+        bool include_task_details = true)
+    {
+        var result = sessionService.GetSessionSummary(session_id);
+
+        if (!result.Success)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = result.ErrorCode,
+                error_message = result.ErrorMessage
+            });
+        }
+
+        // M2-041: Return same structure as time_session_end but session remains active
+        return BuildSessionSummaryResponse(result.Session!, include_task_details, isEnded: false);
+    }
+
+    /// <summary>
+    /// Builds a session summary response JSON.
+    /// </summary>
+    private static string BuildSessionSummaryResponse(Session session, bool includeTaskDetails, bool isEnded)
+    {
+        // Calculate task counts
+        var tasksCompleted = session.Tasks.Count(t => t.Status == Models.TaskStatus.Completed);
+        var tasksSkipped = session.Tasks.Count(t => t.Status == Models.TaskStatus.Skipped);
+        var tasksInProgress = session.Tasks.Count(t => t.Status == Models.TaskStatus.InProgress);
+        var tasksNotStarted = session.Tasks.Count(t => t.Status == Models.TaskStatus.NotStarted);
+        var tasksRemaining = tasksInProgress + tasksNotStarted;
+
+        // Calculate duration
+        long? durationMs = session.GetDurationMs();
+        long elapsedMs = session.GetElapsedMs();
+        var effectiveDurationMs = durationMs ?? elapsedMs;
+
+        // Build response object
+        var response = new Dictionary<string, object?>
+        {
+            ["session_id"] = session.SessionId,
+            ["milestone_id"] = session.MilestoneId,
+            ["milestone_name"] = session.MilestoneName,
+            ["is_ended"] = isEnded,
+            ["start_time"] = session.StartTime.ToString("o"),
+            ["start_time_friendly"] = session.StartTime.ToString("MMMM d, yyyy h:mm:ss tt"),
+            ["end_time"] = session.EndTime?.ToString("o"),
+            ["end_time_friendly"] = session.EndTime?.ToString("MMMM d, yyyy h:mm:ss tt"),
+            ["duration_ms"] = effectiveDurationMs,
+            ["duration"] = FormatDuration(effectiveDurationMs),
+            ["timezone"] = session.Timezone,
+            ["task_count"] = session.TaskIds.Count,
+            ["tasks_completed"] = tasksCompleted,
+            ["tasks_skipped"] = tasksSkipped,
+            ["tasks_in_progress"] = tasksInProgress,
+            ["tasks_not_started"] = tasksNotStarted,
+            ["tasks_remaining"] = tasksRemaining,
+            ["tags"] = session.Tags,
+            ["metadata"] = session.Metadata
+        };
+
+        // Include task details if requested
+        if (includeTaskDetails)
+        {
+            var taskDetails = session.Tasks.Select(t => new Dictionary<string, object?>
+            {
+                ["task_id"] = t.TaskId,
+                ["task_name"] = t.TaskName,
+                ["status"] = t.Status,
+                ["start_time"] = t.StartTime?.ToString("o"),
+                ["end_time"] = t.EndTime?.ToString("o"),
+                ["duration_ms"] = t.DurationMs,
+                ["duration"] = t.DurationMs.HasValue ? FormatDuration(t.DurationMs.Value) : null,
+                ["metadata"] = t.Metadata
+            }).ToList();
+
+            response["tasks"] = taskDetails;
+        }
+
+        return JsonSerializer.Serialize(response);
+    }
+
+    // M3-001: Implement time_task_start tool
+    /// <summary>
+    /// Starts timing for a specific task within a session.
+    /// </summary>
+    [McpServerTool]
+    [Description("Starts timing for a specific task within a session. Returns task start time and session progress.")]
+    public static string time_task_start(
+        ISessionService sessionService,
+        // M3-002: Required parameters
+        [Description("The session ID containing the task (required).")]
+        string session_id,
+        [Description("The task ID to start (required).")]
+        string task_id,
+        // M3-003: Optional parameters
+        [Description("Human-readable name for the task (optional).")]
+        string? task_name = null,
+        [Description("External task ID for integration (optional).")]
+        string? external_task_id = null,
+        [Description("Work item ID for integration (optional).")]
+        string? work_item_id = null,
+        [Description("Additional metadata as JSON object (optional).")]
+        string? metadata = null)
+    {
+        // Parse metadata if provided
+        Dictionary<string, string>? metadataDict = null;
+        if (!string.IsNullOrWhiteSpace(metadata))
+        {
+            try
+            {
+                metadataDict = JsonSerializer.Deserialize<Dictionary<string, string>>(metadata);
+            }
+            catch
+            {
+                return JsonSerializer.Serialize(new
+                {
+                    error = true,
+                    error_code = "INVALID_METADATA",
+                    error_message = "metadata must be a valid JSON object with string values."
+                });
+            }
+        }
+
+        // M3-004, M3-005, M3-006: Start the task (idempotent, enforces limits, records time)
+        var result = sessionService.StartTask(
+            sessionId: session_id,
+            taskId: task_id,
+            taskName: task_name,
+            externalTaskId: external_task_id,
+            workItemId: work_item_id,
+            metadata: metadataDict);
+
+        if (!result.Success)
+        {
+            // M3-018: Return error with error_code
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = result.ErrorCode,
+                error_message = result.ErrorMessage,
+                tasks_completed = 0,
+                tasks_remaining = 0
+            });
+        }
+
+        var task = result.Task!;
+        var session = result.Session!;
+
+        // Calculate task counts
+        var tasksCompleted = session.Tasks.Count(t => t.Status == Models.TaskStatus.Completed);
+        var tasksSkipped = session.Tasks.Count(t => t.Status == Models.TaskStatus.Skipped);
+        var tasksInProgress = session.Tasks.Count(t => t.Status == Models.TaskStatus.InProgress);
+        var tasksNotStarted = session.Tasks.Count(t => t.Status == Models.TaskStatus.NotStarted);
+        var tasksRemaining = tasksInProgress + tasksNotStarted;
+
+        // M3-026: Calculate session_elapsed
+        var sessionElapsed = session.GetElapsedMs();
+
+        // M3-007, M3-008: Return response
+        return JsonSerializer.Serialize(new
+        {
+            task_id = task.TaskId,
+            task_name = task.TaskName,
+            session_id = session.SessionId,
+            // M3-007: start_time fields
+            start_time = task.StartTime?.ToString("o"),
+            start_time_friendly = task.StartTime?.ToString("MMMM d, yyyy h:mm:ss tt"),
+            // M3-026: session_elapsed
+            session_elapsed_ms = sessionElapsed,
+            session_elapsed = FormatDuration(sessionElapsed),
+            // M3-008: task counts and already_running flag
+            tasks_completed = tasksCompleted,
+            tasks_skipped = tasksSkipped,
+            tasks_in_progress = tasksInProgress,
+            tasks_not_started = tasksNotStarted,
+            tasks_remaining = tasksRemaining,
+            // M3-004: already_running flag for idempotent behavior
+            already_running = task.AlreadyRunning,
+            external_task_id = task.ExternalTaskId,
+            work_item_id = task.WorkItemId,
+            metadata = task.Metadata
+        });
+    }
+
+    // M3-009: Implement time_task_end tool
+    /// <summary>
+    /// Ends timing for a specific task and records the duration.
+    /// </summary>
+    [McpServerTool]
+    [Description("Ends timing for a specific task and records the duration. Returns task timing details and session progress.")]
+    public static string time_task_end(
+        ISessionService sessionService,
+        // M3-010: Required parameters
+        [Description("The session ID containing the task (required).")]
+        string session_id,
+        [Description("The task ID to end (required).")]
+        string task_id,
+        // M3-011: Optional parameters
+        [Description("Task completion status: 'completed' (default) or 'skipped'.")]
+        string status = "completed",
+        [Description("Additional metadata as JSON object (optional). Merged with start metadata.")]
+        string? metadata = null)
+    {
+        // Parse metadata if provided
+        Dictionary<string, string>? metadataDict = null;
+        if (!string.IsNullOrWhiteSpace(metadata))
+        {
+            try
+            {
+                metadataDict = JsonSerializer.Deserialize<Dictionary<string, string>>(metadata);
+            }
+            catch
+            {
+                return JsonSerializer.Serialize(new
+                {
+                    error = true,
+                    error_code = "INVALID_METADATA",
+                    error_message = "metadata must be a valid JSON object with string values.",
+                    tasks_completed = 0,
+                    tasks_remaining = 0
+                });
+            }
+        }
+
+        // M3-012, M3-013, M3-014, M3-015, M3-016: End the task
+        var result = sessionService.EndTask(
+            sessionId: session_id,
+            taskId: task_id,
+            status: status,
+            metadata: metadataDict);
+
+        if (!result.Success)
+        {
+            // M3-013, M3-018: Return error with TASK_NOT_STARTED or other error
+            return JsonSerializer.Serialize(new
+            {
+                error = true,
+                error_code = result.ErrorCode,
+                error_message = result.ErrorMessage,
+                tasks_completed = 0,
+                tasks_remaining = 0
+            });
+        }
+
+        var task = result.Task!;
+        var session = result.Session!;
+
+        // Calculate task counts
+        var tasksCompleted = session.Tasks.Count(t => t.Status == Models.TaskStatus.Completed);
+        var tasksSkipped = session.Tasks.Count(t => t.Status == Models.TaskStatus.Skipped);
+        var tasksInProgress = session.Tasks.Count(t => t.Status == Models.TaskStatus.InProgress);
+        var tasksNotStarted = session.Tasks.Count(t => t.Status == Models.TaskStatus.NotStarted);
+        var tasksRemaining = tasksInProgress + tasksNotStarted;
+
+        // M3-017, M3-018: Return response
+        return JsonSerializer.Serialize(new
+        {
+            task_id = task.TaskId,
+            task_name = task.TaskName,
+            session_id = session.SessionId,
+            // M3-017: timing fields
+            start_time = task.StartTime?.ToString("o"),
+            end_time = task.EndTime?.ToString("o"),
+            start_time_friendly = task.StartTime?.ToString("MMMM d, yyyy h:mm:ss tt"),
+            end_time_friendly = task.EndTime?.ToString("MMMM d, yyyy h:mm:ss tt"),
+            // M3-014, M3-015, M3-017: duration fields
+            duration_ms = task.DurationMs,
+            duration = task.DurationMs.HasValue ? FormatDuration(task.DurationMs.Value) : null,
+            // M3-015: status
+            status = task.Status,
+            // M3-018: task counts
+            tasks_completed = tasksCompleted,
+            tasks_skipped = tasksSkipped,
+            tasks_in_progress = tasksInProgress,
+            tasks_not_started = tasksNotStarted,
+            tasks_remaining = tasksRemaining,
+            // M3-016: merged metadata
+            external_task_id = task.ExternalTaskId,
+            work_item_id = task.WorkItemId,
+            metadata = task.Metadata
+        });
+    }
+
+    /// <summary>
+    /// Formats a duration in milliseconds as a human-readable string.
+    /// </summary>
+    private static string FormatDuration(long milliseconds)
+    {
+        // M3-019: Delegate to DurationFormatter utility class
+        return DurationFormatter.Format(milliseconds);
+    }
+
+    /// <summary>
+    /// Formats a TimeSpan offset as ±HH:MM string.
+    /// </summary>
+    private static string FormatUtcOffset(TimeSpan offset)
+    {
+        var sign = offset >= TimeSpan.Zero ? "+" : "-";
+        var absOffset = offset.Duration();
+        return $"{sign}{absOffset.Hours:D2}:{absOffset.Minutes:D2}";
+    }
+}

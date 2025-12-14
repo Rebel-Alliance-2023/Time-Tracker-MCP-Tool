@@ -1,0 +1,14 @@
+﻿using ModelContextProtocol.Server;
+using System.ComponentModel;
+
+namespace TimeTrackerMcp.Tools;
+
+/// <summary>
+/// MCP tools for time tracking functionality.
+/// </summary>
+[McpServerToolType]
+public static class TimeTools
+{
+    // V1 tool: time_get_current will be implemented here (M1-010)
+    // V2 tools: time_session_start, time_task_start, etc. will be added later
+}

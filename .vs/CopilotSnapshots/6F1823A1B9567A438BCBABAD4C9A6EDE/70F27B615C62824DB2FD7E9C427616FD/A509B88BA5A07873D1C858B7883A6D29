@@ -1,0 +1,16 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ModelContextProtocol.AspNetCore;
+using ModelContextProtocol.Server;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddMcpServer()
+    .WithToolsFromAssembly(typeof(Program).Assembly);
+
+var app = builder.Build();
+
+app.MapMcp();
+
+await app.RunAsync();

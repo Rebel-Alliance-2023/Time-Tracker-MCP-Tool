@@ -1,0 +1,10 @@
+﻿namespace TimeTrackerMcp.Services;
+
+/// <summary>
+/// Placeholder interface for timezone resolution.
+/// Will be fully defined in M1-003.
+/// </summary>
+public interface ITimeZoneResolver
+{
+    // M1-003: Define ResolveTimeZone method
+}

@@ -1,0 +1,401 @@
+﻿# Time Tracker MCP Tool - Task List
+
+**Source:** Implementation Plan - Time Tracker MCP Tool.md  
+**Spec:** Time Tracker MCP Tool Specification.md (v2.1)
+
+---
+
+## Task Legend
+
+- **Status:** `[ ]` Not Started | `[~]` In Progress | `[x]` Complete | `[-]` Blocked
+- **Priority:** P0 (Critical) | P1 (High) | P2 (Medium) | P3 (Low)
+- **Size:** XS (<2h) | S (2-4h) | M (4-8h) | L (1-2d) | XL (2-5d)
+- **Dependencies:** Listed by task ID
+
+---
+
+## Milestone 0 — Repo Scaffolding and MCP Server Skeleton
+
+### Repository Setup
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-001 | Create GitHub repo `Time-Tracker-MCP-Tool` | XS | P0 | - | [x] |
+| M0-002 | Initialize repo with `.gitignore`, `LICENSE` (MIT), `README.md` | XS | P0 | M0-001 | [x] |
+| M0-003 | Create solution file `TimeTrackerMcp.slnx` | XS | P0 | M0-002 | [x] |
+| M0-004 | Create `src/TimeTrackerMcp/` project folder structure | XS | P0 | M0-003 | [x] |
+| M0-005 | Create `TimeTrackerMcp.csproj` targeting .NET 10 | S | P0 | M0-004 | [x] |
+| M0-006 | Add `ModelContextProtocol` and `ModelContextProtocol.AspNetCore` NuGet packages | XS | P0 | M0-005 | [x] |
+| M0-007 | Create `tests/TimeTrackerMcp.Tests/` project folder | XS | P0 | M0-003 | [x] |
+| M0-008 | Create `TimeTrackerMcp.Tests.csproj` with xUnit references | S | P0 | M0-007 | [x] |
+
+### MCP Server Bootstrap
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-009 | Create `Program.cs` with MCP server host builder | M | P0 | M0-006 | [x] |
+| M0-010 | Configure Streamable HTTP transport on `/mcp` endpoint | M | P0 | M0-009 | [x] |
+| M0-011 | Create empty `Tools/TimeTools.cs` with `[McpServerToolType]` attribute | S | P0 | M0-009 | [x] |
+| M0-012 | Configure tool assembly registration via `WithToolsFromAssembly()` | S | P0 | M0-011 | [x] |
+| M0-013 | Configure logging to stderr (avoid stdout pollution) | S | P1 | M0-009 | [x] |
+| M0-014 | Add structured logging with built-in ILogger | S | P1 | M0-013 | [x] |
+
+### Project Structure
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-015 | Create `Models/` folder | XS | P0 | M0-004 | [x] |
+| M0-016 | Create `Services/` folder | XS | P0 | M0-004 | [x] |
+| M0-017 | Create placeholder `Models/TimeResult.cs` record | XS | P0 | M0-015 | [x] |
+
+### Documentation
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-018 | Write README: project overview, how to build/run | S | P0 | M0-012 | [x] |
+| M0-019 | Add "Quick Start" section to README | S | P1 | M0-018 | [x] |
+| M0-020 | Add Visual Studio 2026 registration instructions to README | S | P1 | M0-019 | [x] |
+
+### Verification
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-021 | Verify `dotnet build` succeeds | XS | P0 | M0-012 | [ ] |
+| M0-022 | Verify `dotnet test` passes (empty test project) | XS | P0 | M0-008 | [ ] |
+| M0-023 | Verify `dotnet run` starts MCP server and listens on `/mcp` | S | P0 | M0-012 | [ ] |
+
+---
+
+## Milestone 1 — V1 Tool: `time_get_current`
+
+### Models
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M1-001 | Define `TimeResult` record with `Timestamp`, `Timezone`, `UtcOffset` | S | P0 | M0-017 | [x] |
+| M1-002 | Add JSON serialization attributes to `TimeResult` | XS | P0 | M1-001 | [x] |
+
+### Timezone Handling
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M1-003 | Create `Services/ITimeZoneResolver.cs` interface | S | P0 | M0-016 | [x] |
+| M1-004 | Implement `Services/TimeZoneResolver.cs` | M | P0 | M1-003 | [x] |
+| M1-005 | Handle `local` timezone => `TimeZoneInfo.Local` | S | P0 | M1-004 | [x] |
+| M1-006 | Handle `UTC` timezone => `TimeZoneInfo.Utc` | S | P0 | M1-004 | [x] |
+| M1-007 | Add IANA to Windows timezone mapping (use `TimeZoneConverter` NuGet) | M | P0 | M1-004 | [x] |
+| M1-008 | Return structured error for unknown timezone | S | P0 | M1-004 | [x] |
+| M1-009 | Register `ITimeZoneResolver` in DI | XS | P0 | M1-004 | [x] |
+
+### Tool Implementation
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M1-010 | Implement `time_get_current` tool method in `TimeTools.cs` | M | P0 | M1-001, M1-009 | [x] |
+| M1-011 | Add `format` parameter with default `iso8601` | S | P0 | M1-010 | [x] |
+| M1-012 | Add `timezone` parameter with default `local` | S | P0 | M1-010 | [x] |
+| M1-013 | Implement `iso8601` format output | S | P0 | M1-010 | [x] |
+| M1-014 | Implement `unix` format output (seconds since epoch) | S | P0 | M1-010 | [x] |
+| M1-015 | Implement `unix_ms` format output (milliseconds since epoch) | S | P0 | M1-010 | [x] |
+| M1-016 | Implement `friendly` format output (e.g., "December 14, 2025 9:45:32 AM") | S | P0 | M1-010 | [x] |
+| M1-017 | Return structured error for unknown format | S | P0 | M1-010 | [x] |
+| M1-018 | Compute and return `utc_offset` in ±HH:MM format | S | P0 | M1-010 | [x] |
+
+### Unit Tests
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M1-019 | Test: `iso8601` format renders correctly | S | P1 | M1-013 | [x] |
+| M1-020 | Test: `unix` format renders correctly | S | P1 | M1-014 | [x] |
+| M1-021 | Test: `unix_ms` format renders correctly | S | P1 | M1-015 | [x] |
+| M1-022 | Test: `friendly` format renders correctly | S | P1 | M1-016 | [x] |
+| M1-023 | Test: `local` timezone returns system timezone | S | P1 | M1-005 | [x] |
+| M1-024 | Test: `UTC` timezone returns UTC | S | P1 | M1-006 | [x] |
+| M1-025 | Test: IANA timezone (e.g., `America/New_York`) converts correctly | S | P1 | M1-007 | [x] |
+| M1-026 | Test: Unknown timezone returns structured error | S | P1 | M1-008 | [x] |
+| M1-027 | Test: Unknown format returns structured error | S | P1 | M1-017 | [x] |
+| M1-028 | Test: UTC offset formatting is correct | S | P1 | M1-018 | [x] |
+
+### Performance Verification
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M1-029 | Verify tool latency < 1ms on dev machine | S | P1 | M1-010 | [ ] |
+
+---
+
+## Milestone 2 — V2 Sessions: In-Memory Session Tracking
+
+### Models
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-001 | Create `Models/Session.cs` record per spec | M | P0 | M0-015 | [ ] |
+| M2-002 | Add `SessionId`, `McpSessionId`, `MilestoneId`, `MilestoneName` properties | S | P0 | M2-001 | [ ] |
+| M2-003 | Add `TaskIds` list, `StartTime`, `StartTicks`, `EndTime`, `EndTicks` properties | S | P0 | M2-001 | [ ] |
+| M2-004 | Add `Timezone`, `Metadata`, `Tags`, `LastActivityTime` properties | S | P0 | M2-001 | [ ] |
+| M2-005 | Add `Tasks` list of `TaskRecord` | S | P0 | M2-001 | [ ] |
+| M2-006 | Create `Models/TaskRecord.cs` record per spec | M | P0 | M0-015 | [ ] |
+| M2-007 | Add `TaskId`, `TaskName`, `ExternalTaskId`, `WorkItemId` properties | S | P0 | M2-006 | [ ] |
+| M2-008 | Add `StartTime`, `StartTicks`, `EndTime`, `EndTicks`, `DurationMs` properties | S | P0 | M2-006 | [ ] |
+| M2-009 | Add `Status`, `Metadata`, `AlreadyRunning` flag | S | P0 | M2-006 | [ ] |
+| M2-010 | Add JSON serialization attributes to `Session` and `TaskRecord` | S | P1 | M2-001, M2-006 | [ ] |
+
+### Session Service
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-011 | Create `Services/ISessionService.cs` interface | S | P0 | M0-016 | [ ] |
+| M2-012 | Define `StartSession`, `EndSession`, `GetSession`, `GetSessionSummary` methods | S | P0 | M2-011 | [ ] |
+| M2-013 | Define `StartTask`, `EndTask` methods | S | P0 | M2-011 | [ ] |
+| M2-014 | Define `CleanupExpiredSessions` method | S | P0 | M2-011 | [ ] |
+| M2-015 | Create `Services/InMemorySessionService.cs` | M | P0 | M2-011 | [ ] |
+| M2-016 | Implement `ConcurrentDictionary<string, Session>` storage | S | P0 | M2-015 | [ ] |
+| M2-017 | Implement `StartSession` with GUID generation, timestamp, ticks | M | P0 | M2-015 | [ ] |
+| M2-018 | Bind MCP protocol session ID to session record | S | P0 | M2-017 | [ ] |
+| M2-019 | Implement `EndSession` with duration calculation (monotonic) | M | P0 | M2-015 | [ ] |
+| M2-020 | Implement idempotent `EndSession` (return existing if already ended) | S | P0 | M2-019 | [ ] |
+| M2-021 | Implement `GetSession` (returns null if not found) | S | P0 | M2-015 | [ ] |
+| M2-022 | Implement `GetSessionSummary` (current state without ending) | M | P0 | M2-015 | [ ] |
+| M2-023 | Register `ISessionService` as singleton in DI | XS | P0 | M2-015 | [ ] |
+
+### Retention Limits
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-024 | Add max sessions limit (100) with enforcement | S | P0 | M2-017 | [ ] |
+| M2-025 | Add max tasks per session limit (500) | S | P0 | M2-015 | [ ] |
+| M2-026 | Add max session age limit (24 hours) | S | P0 | M2-015 | [ ] |
+| M2-027 | Add max inactivity limit (4 hours) | S | P0 | M2-015 | [ ] |
+| M2-028 | Implement `CleanupExpiredSessions` method | M | P0 | M2-026, M2-027 | [ ] |
+
+### Background Cleanup
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-029 | Create `Services/SessionCleanupService.cs` as `IHostedService` | M | P0 | M2-028 | [ ] |
+| M2-030 | Configure cleanup timer interval (5 minutes) | S | P0 | M2-029 | [ ] |
+| M2-031 | Register `SessionCleanupService` in DI | XS | P0 | M2-029 | [ ] |
+
+### Session Tools
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-032 | Implement `time_session_start` tool | M | P0 | M2-017 | [ ] |
+| M2-033 | Parse `milestone_id`, `task_ids` (required) | S | P0 | M2-032 | [ ] |
+| M2-034 | Parse `milestone_name`, `timezone`, `metadata`, `tags` (optional) | S | P0 | M2-032 | [ ] |
+| M2-035 | Return `session_id`, `start_time`, `start_time_friendly`, `task_count`, `timezone` | S | P0 | M2-032 | [ ] |
+| M2-036 | Implement `time_session_end` tool | M | P0 | M2-019 | [ ] |
+| M2-037 | Parse `session_id` (required), `include_task_details` (optional, default true) | S | P0 | M2-036 | [ ] |
+| M2-038 | Return full session summary with task breakdown | M | P0 | M2-036 | [ ] |
+| M2-039 | Handle session not found ? structured error | S | P0 | M2-036 | [ ] |
+| M2-040 | Implement `time_session_summary` tool | M | P0 | M2-022 | [ ] |
+| M2-041 | Return same structure as `time_session_end` but session remains active | S | P0 | M2-040 | [ ] |
+
+### Unit Tests
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M2-042 | Test: Start session returns valid session ID | S | P1 | M2-032 | [ ] |
+| M2-043 | Test: End session returns correct duration | S | P1 | M2-036 | [ ] |
+| M2-044 | Test: End session is idempotent | S | P1 | M2-020 | [ ] |
+| M2-045 | Test: Session not found returns error | S | P1 | M2-039 | [ ] |
+| M2-046 | Test: Multiple concurrent sessions work independently | M | P1 | M2-016 | [ ] |
+| M2-047 | Test: Sessions expire after inactivity | M | P1 | M2-027 | [ ] |
+| M2-048 | Test: Max sessions limit enforced | S | P1 | M2-024 | [ ] |
+| M2-049 | Test: Session summary works mid-execution | S | P1 | M2-040 | [ ] |
+
+---
+
+## Milestone 3 — V2 Tasks: Task Timing and Summary
+
+### Task Tools
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M3-001 | Implement `time_task_start` tool | M | P0 | M2-013 | [ ] |
+| M3-002 | Parse `session_id`, `task_id` (required) | S | P0 | M3-001 | [ ] |
+| M3-003 | Parse `task_name`, `external_task_id`, `work_item_id`, `metadata` (optional) | S | P0 | M3-001 | [ ] |
+| M3-004 | Implement idempotent start (return existing + `already_running=true`) | M | P0 | M3-001 | [ ] |
+| M3-005 | Enforce max tasks per session limit (500) | S | P0 | M3-001 | [ ] |
+| M3-006 | Record `start_time` (wall-clock) + `start_ticks` (monotonic) | S | P0 | M3-001 | [ ] |
+| M3-007 | Return `task_id`, `start_time`, `start_time_friendly`, `session_elapsed` | S | P0 | M3-001 | [ ] |
+| M3-008 | Return `tasks_completed`, `tasks_remaining`, `already_running` | S | P0 | M3-001 | [ ] |
+| M3-009 | Implement `time_task_end` tool | M | P0 | M2-013 | [ ] |
+| M3-010 | Parse `session_id`, `task_id` (required) | S | P0 | M3-009 | [ ] |
+| M3-011 | Parse `status` (default `completed`), `metadata` (optional) | S | P0 | M3-009 | [ ] |
+| M3-012 | Validate task exists and is in progress | S | P0 | M3-009 | [ ] |
+| M3-013 | Return error `TASK_NOT_STARTED` if task not found or not in progress | S | P0 | M3-009 | [ ] |
+| M3-014 | Compute duration from monotonic ticks | M | P0 | M3-009 | [ ] |
+| M3-015 | Record `end_time`, `end_ticks`, `duration_ms`, `status` | S | P0 | M3-009 | [ ] |
+| M3-016 | Merge completion metadata with start metadata | S | P1 | M3-009 | [ ] |
+| M3-017 | Return `task_id`, `start_time`, `end_time`, `duration`, `duration_ms`, `status` | S | P0 | M3-009 | [ ] |
+| M3-018 | Return `tasks_completed`, `tasks_remaining`, `error`, `error_code` | S | P0 | M3-009 | [ ] |
+
+### Duration Formatting
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M3-019 | Create `DurationFormatter` utility class | S | P0 | M0-016 | [ ] |
+| M3-020 | Implement human-readable duration (e.g., "2 minutes 34 seconds") | M | P0 | M3-019 | [ ] |
+| M3-021 | Handle edge cases: < 1 second, hours, etc. | S | P1 | M3-020 | [ ] |
+
+### Summary Calculations
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M3-022 | Calculate `tasks_completed` count | S | P0 | M2-022 | [ ] |
+| M3-023 | Calculate `tasks_skipped` count | S | P0 | M2-022 | [ ] |
+| M3-024 | Calculate `tasks_not_started` count | S | P0 | M2-022 | [ ] |
+| M3-025 | Calculate `tasks_remaining` (in progress + not started) | S | P0 | M2-022 | [ ] |
+| M3-026 | Calculate `session_elapsed` from session start | S | P0 | M3-001 | [ ] |
+
+### Unit Tests
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M3-027 | Test: Task start returns correct data | S | P1 | M3-001 | [ ] |
+| M3-028 | Test: Task start is idempotent | S | P1 | M3-004 | [ ] |
+| M3-029 | Test: Task end without start returns error | S | P1 | M3-013 | [ ] |
+| M3-030 | Test: Task end computes correct duration | M | P1 | M3-014 | [ ] |
+| M3-031 | Test: Skipped status works correctly | S | P1 | M3-011 | [ ] |
+| M3-032 | Test: Overlapping/parallel tasks compute independently | M | P1 | M3-014 | [ ] |
+| M3-033 | Test: Duration formatting is human-readable | S | P1 | M3-020 | [ ] |
+| M3-034 | Test: Summary counts are accurate | M | P1 | M3-022 to M3-025 | [ ] |
+| M3-035 | Test: Duration remains accurate if system clock changes | M | P0 | M3-014 | [ ] |
+
+---
+
+## Milestone 4 — Packaging + Registration Workflows
+
+### Build Configurations
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M4-001 | Configure Debug build profile | S | P0 | M0-005 | [ ] |
+| M4-002 | Configure Release build profile | S | P0 | M0-005 | [ ] |
+| M4-003 | Configure self-contained single-file publish | M | P0 | M4-002 | [ ] |
+| M4-004 | Test single-file publish on Windows | S | P1 | M4-003 | [ ] |
+| M4-005 | Test single-file publish on Linux (optional) | S | P2 | M4-003 | [ ] |
+
+### Visual Studio 2026 Registration
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M4-006 | Document Visual Studio 2026 MCP server registration steps | M | P0 | M0-020 | [ ] |
+| M4-007 | Test registration and tool invocation in VS 2026 | M | P0 | M4-006 | [ ] |
+| M4-008 | Create `mcp.json` sample for solution directory (if supported) | S | P1 | M4-006 | [ ] |
+
+### VS Code Registration
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M4-009 | Create `.vscode/mcp.json` sample file | S | P1 | M0-018 | [ ] |
+| M4-010 | Document VS Code MCP server registration steps | S | P1 | M4-009 | [ ] |
+| M4-011 | Test registration and tool invocation in VS Code | M | P1 | M4-010 | [ ] |
+| M4-012 | Document CLI-based `--add-mcp` user profile registration | S | P2 | M4-010 | [ ] |
+
+### Documentation
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M4-013 | Document tool permissions (no filesystem/network) | S | P1 | M0-018 | [ ] |
+| M4-014 | Document security posture and minimal risk | S | P1 | M4-013 | [ ] |
+| M4-015 | Add troubleshooting section to README | S | P2 | M0-018 | [ ] |
+
+---
+
+## Milestone 5 — CI, Quality Gates, and Release Packaging
+
+### GitHub Actions Workflow
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M5-001 | Create `.github/workflows/build.yml` | M | P0 | M0-001 | [ ] |
+| M5-002 | Configure .NET 10 SDK setup | S | P0 | M5-001 | [ ] |
+| M5-003 | Add `dotnet restore` step | S | P0 | M5-001 | [ ] |
+| M5-004 | Add `dotnet build` step | S | P0 | M5-001 | [ ] |
+| M5-005 | Add `dotnet test` step with results reporting | S | P0 | M5-001 | [ ] |
+| M5-006 | Add `dotnet publish` step for self-contained artifact | M | P1 | M5-001 | [ ] |
+| M5-007 | Upload artifact for download | S | P1 | M5-006 | [ ] |
+
+### Quality Gates
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M5-008 | Configure workflow to run on every PR | S | P0 | M5-001 | [ ] |
+| M5-009 | Configure workflow to run on push to main | S | P0 | M5-001 | [ ] |
+| M5-010 | Add code coverage reporting (optional) | M | P2 | M5-005 | [ ] |
+
+### Versioning
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M5-011 | Add version info to project (AssemblyVersion, etc.) | S | P1 | M0-005 | [ ] |
+| M5-012 | Create release workflow for Git tags | M | P1 | M5-001 | [ ] |
+| M5-013 | Auto-generate changelog from commits (optional) | M | P2 | M5-012 | [ ] |
+
+### Logging
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M5-014 | Ensure structured logs include tool name, duration | S | P1 | M0-014 | [ ] |
+| M5-015 | Ensure structured logs include session/task IDs | S | P1 | M0-014 | [ ] |
+| M5-016 | Verify no PII or file paths in logs | S | P0 | M0-014 | [ ] |
+
+---
+
+## Summary
+
+| Milestone | Tasks | P0 | P1 | P2 |
+|-----------|-------|----|----|-----|
+| M0 | 23 | 18 | 4 | 1 |
+| M1 | 29 | 19 | 10 | 0 |
+| M2 | 49 | 39 | 10 | 0 |
+| M3 | 35 | 26 | 9 | 0 |
+| M4 | 15 | 5 | 7 | 3 |
+| M5 | 16 | 7 | 6 | 3 |
+| **Total** | **167** | **114** | **46** | **7** |
+
+---
+
+## Critical Path
+
+### Primary Chain: Repo Setup ? MCP Server ? V1 Tool ? V2 Sessions ? V2 Tasks
+
+```
+M0-001 (Create repo) ? M0-005 (Create project) ? M0-009 (Program.cs) ? M0-012 (Tool registration)
+    ? M1-010 (time_get_current) ? M1-029 (Verify latency)
+    ? M2-015 (InMemorySessionService) ? M2-032 (time_session_start) ? M2-036 (time_session_end)
+    ? M3-001 (time_task_start) ? M3-009 (time_task_end) ? M3-035 (Duration accuracy test)
+    ? M4-007 (VS 2026 test) ? M5-001 (CI workflow)
+```
+
+### Timezone Chain
+
+```
+M1-003 (ITimeZoneResolver) ? M1-004 (TimeZoneResolver) ? M1-007 (IANA mapping) ? M1-010 (time_get_current)
+```
+
+### Session Lifecycle Chain
+
+```
+M2-011 (ISessionService) ? M2-015 (InMemorySessionService) ? M2-017 (StartSession) 
+    ? M2-019 (EndSession) ? M2-022 (GetSessionSummary) ? M2-028 (CleanupExpiredSessions)
+    ? M2-029 (SessionCleanupService)
+```
+
+### Task Timing Chain
+
+```
+M3-001 (time_task_start) ? M3-004 (Idempotent start) ? M3-009 (time_task_end) 
+    ? M3-014 (Monotonic duration) ? M3-020 (Duration formatting)
+```
+
+---
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2025-12-14 | Initial task list created from Implementation Plan v1.1 |

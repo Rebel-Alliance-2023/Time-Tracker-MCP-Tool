@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "servers": {
+    "time-tracker": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/TimeTrackerMcp/TimeTrackerMcp.csproj",
+        "--no-build"
+      ],
+      "env": {},
+      "description": "Time Tracker MCP Tool - Provides time tracking capabilities for AI coding assistants"
+    }
+  }
+}

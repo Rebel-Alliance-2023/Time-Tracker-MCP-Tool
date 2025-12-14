@@ -1,0 +1,174 @@
+﻿# Milestone 0 Task Execution Report: MCP Server Bootstrap
+
+**Execution Date:** December 14, 2025  
+
+---
+
+## Execution Session 1: Repository Setup (M0-001 to M0-008)
+
+**Start Time:** 10:58 AM EST  
+**End Time:** 10:59 AM EST  
+**Duration:** 1 minute
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M0-001 | Create GitHub repo `Time-Tracker-MCP-Tool` | ✓ Complete (pre-existing) |
+| M0-002 | Initialize repo with `.gitignore`, `LICENSE` (MIT), `README.md` | ✓ Complete (pre-existing) |
+| M0-003 | Create solution file `TimeTrackerMcp.slnx` | ✓ Complete |
+| M0-004 | Create `src/TimeTrackerMcp/` project folder structure | ✓ Complete |
+| M0-005 | Create `TimeTrackerMcp.csproj` targeting .NET 10 | ✓ Complete |
+| M0-006 | Add `ModelContextProtocol` and `ModelContextProtocol.AspNetCore` NuGet packages | ✓ Complete |
+| M0-007 | Create `tests/TimeTrackerMcp.Tests/` project folder | ✓ Complete |
+| M0-008 | Create `TimeTrackerMcp.Tests.csproj` with xUnit references | ✓ Complete |
+
+---
+
+## Execution Session 2: MCP Server Bootstrap (M0-009 to M0-014)
+
+**Start Time:** 11:01 AM EST  
+**End Time:** 11:02 AM EST  
+**Duration:** 1 minute
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M0-009 | Create `Program.cs` with MCP server host builder | ✓ Complete |
+| M0-010 | Configure Streamable HTTP transport on `/mcp` endpoint | ✓ Complete |
+| M0-011 | Create empty `Tools/TimeTools.cs` with `[McpServerToolType]` attribute | ✓ Complete |
+| M0-012 | Configure tool assembly registration via `WithToolsFromAssembly()` | ✓ Complete |
+| M0-013 | Configure logging to stderr (avoid stdout pollution) | ✓ Complete |
+| M0-014 | Add structured logging with built-in ILogger | ✓ Complete |
+
+---
+
+## Execution Session 3: Project Structure (M0-015 to M0-017)
+
+**Start Time:** 11:03 AM EST  
+**End Time:** 11:04 AM EST  
+**Duration:** 1 minute
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M0-015 | Create `Models/` folder | ✓ Complete |
+| M0-016 | Create `Services/` folder | ✓ Complete |
+| M0-017 | Create placeholder `Models/TimeResult.cs` record | ✓ Complete |
+
+---
+
+## Execution Session 4: Documentation (M0-018 to M0-020)
+
+**Start Time:** 11:05 AM EST  
+**End Time:** 11:06 AM EST  
+**Duration:** 1 minute
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M0-018 | Write README: project overview, how to build/run | ✓ Complete (pre-existing, verified) |
+| M0-019 | Add "Quick Start" section to README | ✓ Complete (pre-existing, verified) |
+| M0-020 | Add Visual Studio 2026 registration instructions to README | ✓ Complete (enhanced) |
+
+---
+
+## Execution Session 5: Milestone 1 - Models & Timezone Handling (M1-001 to M1-009)
+
+**Start Time:** 11:09 AM EST  
+**End Time:** 11:10 AM EST  
+**Duration:** 1 minute
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M1-001 | Define `TimeResult` record with `Timestamp`, `Timezone`, `UtcOffset` | ✓ Complete |
+| M1-002 | Add JSON serialization attributes to `TimeResult` | ✓ Complete |
+| M1-003 | Create `Services/ITimeZoneResolver.cs` interface | ✓ Complete |
+| M1-004 | Implement `Services/TimeZoneResolver.cs` | ✓ Complete |
+| M1-005 | Handle `local` timezone => `TimeZoneInfo.Local` | ✓ Complete |
+| M1-006 | Handle `UTC` timezone => `TimeZoneInfo.Utc` | ✓ Complete |
+| M1-007 | Add IANA to Windows timezone mapping (use `TimeZoneConverter` NuGet) | ✓ Complete |
+| M1-008 | Return structured error for unknown timezone | ✓ Complete |
+| M1-009 | Register `ITimeZoneResolver` in DI | ✓ Complete |
+
+---
+
+## Files Created/Modified
+
+### Session 1 Files
+| File | Description |
+|------|-------------|
+| `TimeTrackerMcp.slnx` | XML-based solution file with src/tests/docs folders |
+| `src/TimeTrackerMcp/TimeTrackerMcp.csproj` | Main MCP server project (.NET 10) |
+| `tests/TimeTrackerMcp.Tests/TimeTrackerMcp.Tests.csproj` | xUnit test project |
+| `.editorconfig` | C# coding style configuration |
+
+### Session 2 Files
+| File | Description |
+|------|-------------|
+| `src/TimeTrackerMcp/Program.cs` | MCP server bootstrap with logging configuration |
+| `src/TimeTrackerMcp/Tools/TimeTools.cs` | Empty tool class with `[McpServerToolType]` attribute |
+
+### Session 3 Files
+| File | Description |
+|------|-------------|
+| `src/TimeTrackerMcp/Models/TimeResult.cs` | Placeholder TimeResult record |
+| `src/TimeTrackerMcp/Services/ITimeZoneResolver.cs` | Placeholder timezone resolver interface |
+
+### Session 4 Files
+| File | Description |
+|------|-------------|
+| `README.md` | Enhanced with detailed VS 2026 registration instructions |
+
+### Session 5 Files
+| File | Description |
+|------|-------------|
+| `src/TimeTrackerMcp/Models/TimeResult.cs` | Full implementation with JSON attributes |
+| `src/TimeTrackerMcp/Services/ITimeZoneResolver.cs` | Full interface with TimeZoneResolverResult |
+| `src/TimeTrackerMcp/Services/TimeZoneResolver.cs` | Full implementation with IANA support |
+| `src/TimeTrackerMcp/Program.cs` | Added ITimeZoneResolver DI registration |
+
+---
+
+## Package Versions
+
+| Package | Version |
+|---------|---------|
+| `ModelContextProtocol` | 0.2.0-preview.1 |
+| `ModelContextProtocol.AspNetCore` | 0.2.0-preview.1 |
+| `TimeZoneConverter` | 6.1.0 |
+| `xunit` | 2.9.2 |
+| `Microsoft.NET.Test.Sdk` | 17.12.0 |
+| `xunit.runner.visualstudio` | 2.8.2 |
+| `coverlet.collector` | 6.0.2 |
+
+---
+
+## Verification
+
+```
+dotnet build TimeTrackerMcp.slnx
+Build succeeded in 2.9s
+```
+
+---
+
+## Summary
+
+- **Milestone 0 Tasks Completed:** 20/23 (M0-001 to M0-020)
+- **Milestone 0 Tasks Remaining:** 3 (M0-021, M0-022, M0-023 - Verification tasks)
+- **Milestone 1 Tasks Completed:** 9/29 (M1-001 to M1-009)
+- **Milestone 1 Tasks Remaining:** 20 (M1-010 to M1-029)
+- **Build Status:** ✓ Passing
+- **Total Duration:** 5 sessions, ~5 minutes
+
+---
+
+## Notes
+
+- M0-001, M0-002: Repository and initial files were pre-existing
+- M0-003: Used `.slnx` format (XML-based) instead of classic `.sln`
+- M0-006: Added both `ModelContextProtocol` and `ModelContextProtocol.AspNetCore` packages
+- M0-013: Logging configured to write to stderr via `LogToStandardErrorThreshold`
+- M0-014: Used built-in `ILogger` with filtering instead of Serilog
+- M0-018, M0-019: README already had good content, verified complete
+- M0-020: Enhanced VS 2026 registration with Options method, mcp.json method, and verification steps
+- M1-003: Created `TimeZoneResolverResult` record for structured error handling
+- M1-007: Used `TimeZoneConverter` NuGet package for IANA timezone support
+- M1-009: Registered `ITimeZoneResolver` as singleton in Program.cs
+

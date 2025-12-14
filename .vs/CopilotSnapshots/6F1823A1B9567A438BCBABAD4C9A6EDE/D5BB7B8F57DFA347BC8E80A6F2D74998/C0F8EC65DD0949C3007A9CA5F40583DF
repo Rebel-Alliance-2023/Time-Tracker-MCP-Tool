@@ -1,0 +1,172 @@
+﻿# Milestone 3 Task Execution Report
+
+**Execution Date:** December 14, 2025  
+
+---
+
+## Execution Session 1: Task Tools (M3-001 to M3-018)
+
+**Start Time:** 12:13 PM EST  
+**End Time:** 12:15 PM EST  
+**Duration:** 2 minutes
+
+### time_task_start Tool (M3-001 to M3-008)
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M3-001 | Implement `time_task_start` tool | ✓ Complete |
+| M3-002 | Parse `session_id`, `task_id` (required) | ✓ Complete |
+| M3-003 | Parse `task_name`, `external_task_id`, `work_item_id`, `metadata` (optional) | ✓ Complete |
+| M3-004 | Implement idempotent start (return existing + `already_running=true`) | ✓ Complete |
+| M3-005 | Enforce max tasks per session limit (500) | ✓ Complete |
+| M3-006 | Record `start_time` (wall-clock) + `start_ticks` (monotonic) | ✓ Complete |
+| M3-007 | Return `task_id`, `start_time`, `start_time_friendly`, `session_elapsed` | ✓ Complete |
+| M3-008 | Return `tasks_completed`, `tasks_remaining`, `already_running` | ✓ Complete |
+
+### time_task_end Tool (M3-009 to M3-018)
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M3-009 | Implement `time_task_end` tool | ✓ Complete |
+| M3-010 | Parse `session_id`, `task_id` (required) | ✓ Complete |
+| M3-011 | Parse `status` (default `completed`), `metadata` (optional) | ✓ Complete |
+| M3-012 | Validate task exists and is in progress | ✓ Complete |
+| M3-013 | Return error `TASK_NOT_STARTED` if task not found or not in progress | ✓ Complete |
+| M3-014 | Compute duration from monotonic ticks | ✓ Complete |
+| M3-015 | Record `end_time`, `end_ticks`, `duration_ms`, `status` | ✓ Complete |
+| M3-016 | Merge completion metadata with start metadata | ✓ Complete |
+| M3-017 | Return `task_id`, `start_time`, `end_time`, `duration`, `duration_ms`, `status` | ✓ Complete |
+| M3-018 | Return `tasks_completed`, `tasks_remaining`, `error`, `error_code` | ✓ Complete |
+
+---
+
+## Execution Session 2: Duration Formatting (M3-019 to M3-021)
+
+**Start Time:** 12:24 PM EST  
+**End Time:** 12:26 PM EST  
+**Duration:** 2 minutes
+
+| Task ID | Task Description | Status |
+|---------|------------------|--------|
+| M3-019 | Create `DurationFormatter` utility class | ✓ Complete |
+| M3-020 | Implement human-readable duration (e.g., "2 minutes 34 seconds") | ✓ Complete |
+| M3-021 | Handle edge cases: < 1 second, hours, etc. | ✓ Complete |
+
+---
+
+## Files Created/Modified
+
+### Session 1 Files
+| File | Description |
+|------|-------------|
+| `src/TimeTrackerMcp/Tools/TimeTools.cs` | Added `time_task_start` and `time_task_end` tools |
+
+### Session 2 Files
+| File | Description |
+|------|-------------|
+| `src/TimeTrackerMcp/Services/DurationFormatter.cs` | New utility class for duration formatting |
+| `src/TimeTrackerMcp/Tools/TimeTools.cs` | Updated `FormatDuration` to delegate to `DurationFormatter` |
+
+---
+
+## Implementation Details
+
+### time_task_start Tool (M3-001 to M3-008)
+- Required parameters: `session_id`, `task_id`
+- Optional parameters: `task_name`, `external_task_id`, `work_item_id`, `metadata`
+- Metadata parsed as JSON object with string values
+- Calls `ISessionService.StartTask()` which handles:
+  - M3-004: Idempotent start (returns existing task with `already_running=true`)
+  - M3-005: Max tasks limit enforcement (500 per session)
+  - M3-006: Records `start_time` and `start_ticks`
+- Returns:
+  - `task_id`, `task_name`, `session_id`
+  - `start_time`, `start_time_friendly` (M3-007)
+  - `session_elapsed_ms`, `session_elapsed` (M3-026 - implemented early)
+  - `tasks_completed`, `tasks_skipped`, `tasks_in_progress`, `tasks_not_started`, `tasks_remaining` (M3-008)
+  - `already_running` flag (M3-004)
+  - `external_task_id`, `work_item_id`, `metadata`
+
+### time_task_end Tool (M3-009 to M3-018)
+- Required parameters: `session_id`, `task_id`
+- Optional parameters: `status` (default: "completed"), `metadata`
+- Status options: "completed" or "skipped"
+- Calls `ISessionService.EndTask()` which handles:
+  - M3-012: Validates task exists and is in progress
+  - M3-013: Returns `TASK_NOT_STARTED` error if not found/not running
+  - M3-014: Computes duration from monotonic ticks
+  - M3-015: Records `end_time`, `end_ticks`, `duration_ms`, `status`
+  - M3-016: Merges completion metadata with start metadata
+- Returns:
+  - `task_id`, `task_name`, `session_id`
+  - `start_time`, `end_time`, `start_time_friendly`, `end_time_friendly` (M3-017)
+  - `duration_ms`, `duration` (human-readable) (M3-017)
+  - `status` (M3-015)
+  - `tasks_completed`, `tasks_skipped`, `tasks_in_progress`, `tasks_not_started`, `tasks_remaining` (M3-018)
+  - Error fields: `error`, `error_code`, `error_message` (M3-018)
+  - `external_task_id`, `work_item_id`, `metadata`
+
+### DurationFormatter Utility Class (M3-019 to M3-021)
+- Static utility class in `Services/DurationFormatter.cs`
+- `Format(long milliseconds)`: Main method for human-readable duration
+  - Returns "less than 1 second" for < 1 second (M3-021)
+  - Supports days, hours, minutes, seconds (M3-021)
+  - Proper singular/plural handling ("1 minute" vs "2 minutes")
+- `FormatDetailed(long milliseconds)`: Shows milliseconds for sub-second durations
+- `FormatCompact(long milliseconds)`: Short format (e.g., "2m 34s")
+- TimeTools.FormatDuration() now delegates to DurationFormatter.Format()
+
+### Error Handling
+- `INVALID_METADATA`: Invalid JSON in metadata parameter
+- `SESSION_NOT_FOUND`: Session ID does not exist
+- `TASK_NOT_STARTED`: Task not found or not in progress
+- `MAX_TASKS_REACHED`: 500 task limit per session exceeded
+
+---
+
+## Verification
+
+```
+dotnet build TimeTrackerMcp.slnx
+Build succeeded in 7.3s
+
+dotnet test TimeTrackerMcp.slnx --no-build
+Test summary: total: 51, failed: 0, succeeded: 51, skipped: 0, duration: 1.7s
+```
+
+---
+
+## Summary
+
+- **Milestone 3 Tasks Completed:** 21/35 (M3-001 to M3-021)
+- **Milestone 3 Tasks Remaining:** 14 (M3-022 to M3-035)
+- **Build Status:** ✓ Passing
+- **Test Status:** ✓ 51 tests passing
+- **Total Duration:** 2 sessions, ~4 minutes
+
+---
+
+## Notes
+
+- M3-001: time_task_start tool with full parameter support via MCP attributes
+- M3-002: session_id and task_id are required string parameters
+- M3-003: Optional parameters with null defaults, metadata parsed from JSON
+- M3-004: Idempotent behavior handled by ISessionService.StartTask(), returns `already_running=true`
+- M3-005: 500 task limit enforced by InMemorySessionService (implemented in M2-025)
+- M3-006: StartTask records wall-clock StartTime and monotonic StartTicks
+- M3-007: Response includes ISO 8601 start_time and friendly format
+- M3-008: Task counts calculated from session.Tasks collection
+- M3-009: time_task_end tool with status and metadata parameters
+- M3-010: session_id and task_id required, passed to EndTask service method
+- M3-011: status defaults to "completed", metadata parsed from JSON
+- M3-012: EndTask validates task exists and has InProgress status
+- M3-013: TASK_NOT_STARTED error code returned for invalid task state
+- M3-014: Duration computed using monotonic ticks via Stopwatch.GetTimestamp
+- M3-015: EndTask records EndTime, EndTicks, calculates DurationMs, sets Status
+- M3-016: Metadata merging handled by InMemorySessionService.EndTask()
+- M3-017: Full timing fields in response with human-readable duration
+- M3-018: Error response includes error, error_code, error_message, plus zero task counts
+- M3-019: DurationFormatter created as static utility class in Services folder
+- M3-020: Format() method produces "X hours Y minutes Z seconds" format
+- M3-021: Edge cases handled: <1s, days, proper singular/plural
+- M3-026: session_elapsed implemented early as part of time_task_start response

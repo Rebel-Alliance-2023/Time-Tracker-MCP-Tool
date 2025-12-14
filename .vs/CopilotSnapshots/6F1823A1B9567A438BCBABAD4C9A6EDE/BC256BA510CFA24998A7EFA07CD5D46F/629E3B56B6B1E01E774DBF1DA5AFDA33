@@ -1,0 +1,63 @@
+﻿# Time Tracker MCP Tool - Task List
+
+**Source:** Implementation Plan - Time Tracker MCP Tool.md  
+**Spec:** Time Tracker MCP Tool Specification.md (v2.1)
+
+---
+
+## Task Legend
+
+- **Status:** `[ ]` Not Started | `[~]` In Progress | `[x]` Complete | `[-]` Blocked
+- **Priority:** P0 (Critical) | P1 (High) | P2 (Medium) | P3 (Low)
+- **Size:** XS (<2h) | S (2-4h) | M (4-8h) | L (1-2d) | XL (2-5d)
+- **Dependencies:** Listed by task ID
+
+---
+
+## Milestone 0 — Repo Scaffolding and MCP Server Skeleton
+
+### Repository Setup
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-001 | Create GitHub repo `Time-Tracker-MCP-Tool` | XS | P0 | - | [x] |
+| M0-002 | Initialize repo with `.gitignore`, `LICENSE` (MIT), `README.md` | XS | P0 | M0-001 | [x] |
+| M0-003 | Create solution file `TimeTrackerMcp.slnx` | XS | P0 | M0-002 | [x] |
+| M0-004 | Create `src/TimeTrackerMcp/` project folder structure | XS | P0 | M0-003 | [x] |
+| M0-005 | Create `TimeTrackerMcp.csproj` targeting .NET 10 | S | P0 | M0-004 | [x] |
+| M0-006 | Add `ModelContextProtocol` and `ModelContextProtocol.AspNetCore` NuGet packages | XS | P0 | M0-005 | [x] |
+| M0-007 | Create `tests/TimeTrackerMcp.Tests/` project folder | XS | P0 | M0-003 | [x] |
+| M0-008 | Create `TimeTrackerMcp.Tests.csproj` with xUnit references | S | P0 | M0-007 | [x] |
+
+### MCP Server Bootstrap
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-009 | Create `Program.cs` with MCP server host builder | M | P0 | M0-006 | [x] |
+| M0-010 | Configure Streamable HTTP transport on `/mcp` endpoint | M | P0 | M0-009 | [x] |
+| M0-011 | Create empty `Tools/TimeTools.cs` with `[McpServerToolType]` attribute | S | P0 | M0-009 | [x] |
+| M0-012 | Configure tool assembly registration via `WithToolsFromAssembly()` | S | P0 | M0-011 | [x] |
+| M0-013 | Configure logging to stderr (avoid stdout pollution) | S | P1 | M0-009 | [x] |
+| M0-014 | Add structured logging with built-in ILogger | S | P1 | M0-013 | [x] |
+
+### Project Structure
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-015 | Create `Models/` folder | XS | P0 | M0-004 | [x] |
+| M0-016 | Create `Services/` folder | XS | P0 | M0-004 | [x] |
+| M0-017 | Create placeholder `Models/TimeResult.cs` record | XS | P0 | M0-015 | [x] |
+
+### Documentation
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-018 | Write README: project overview, how to build/run | S | P0 | M0-012 | [x] |
+| M0-019 | Add "Quick Start" section to README | S | P1 | M0-018 | [x] |
+| M0-020 | Add Visual Studio 2026 registration instructions to README | S | P1 | M0-019 | [x] |
+
+### Verification
+
+| ID | Task | Size | Priority | Deps | Status |
+|----|------|------|----------|------|--------|
+| M0-021 | Verify `doten

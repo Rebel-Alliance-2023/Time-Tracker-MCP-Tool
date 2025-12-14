@@ -1,0 +1,11 @@
+﻿namespace TimeTrackerMcp.Models;
+
+/// <summary>
+/// Represents the result of a time query operation.
+/// Properties will be fully defined in M1-001.
+/// </summary>
+public record TimeResult
+{
+    // M1-001: Define Timestamp, Timezone, UtcOffset properties
+    // M1-002: Add JSON serialization attributes
+}

@@ -1,0 +1,40 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ModelContextProtocol.AspNetCore;
+using ModelContextProtocol.Server;
+using TimeTrackerMcp.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// M0-013: Configure logging to stderr (avoid stdout pollution for MCP)
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(options =>
+{
+    options.LogToStandardErrorThreshold = LogLevel.Trace;
+});
+
+// M0-014: Configure structured logging with built-in ILogger
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+builder.Logging.AddFilter("System", LogLevel.Warning);
+builder.Logging.AddFilter("TimeTrackerMcp", LogLevel.Information);
+
+// M1-009: Register ITimeZoneResolver in DI
+builder.Services.AddSingleton<ITimeZoneResolver, TimeZoneResolver>();
+
+// M2-023: Register ISessionService as singleton in DI
+builder.Services.AddSingleton<ISessionService, InMemorySessionService>();
+
+// M2-031: Register SessionCleanupService as hosted service
+builder.Services.AddHostedService<SessionCleanupService>();
+
+// M0-009, M0-012: Configure MCP server with tool assembly registration
+builder.Services
+    .AddMcpServer()
+    .WithToolsFromAssembly(typeof(Program).Assembly);
+
+var app = builder.Build();
+
+// M0-010: Configure Streamable HTTP transport on /mcp endpoint
+app.MapMcp();
+
+await app.RunAsync();

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TimeTrackerMcp/TimeTrackerMcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TimeTrackerMcp.Tests/TimeTrackerMcp.Tests.csproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/Time Tracker MCP Tool Specification.md" />
+    <File Path="docs/Implementation Plan - Time Tracker MCP Tool.md" />
+    <File Path="docs/Time Tracker MCP Tool - Task List.md" />
+  </Folder>
+</Solution>
